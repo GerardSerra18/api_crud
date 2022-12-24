@@ -1,10 +1,16 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"github.com/gorilla/mux"
+)
 
 func main() {
 
 	//Here we are initializing the new router
-	r := mux.NewRouter() 
+	r := mux.NewRouter()
 
 	//Register the CRUD Handlers for Movies
 	r.HandleFunc("/movies", createMovie).Methods("POST")
