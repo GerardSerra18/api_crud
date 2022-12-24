@@ -1,4 +1,4 @@
-package main 
+package main
 
 import "time"
 
@@ -6,13 +6,13 @@ type Movie struct {
 	ID     string     `json:"id"`
 	Title  string     `json:"title"`
 	Year   *time.Time `json:"year"`
-	Actors []Actors   `json:"actors"`
+	Actors []Actor    `json:"actors"`
 	Genre  string     `json:"gen"`
 	Rating int64      `json:"rating"`
 }
 
-type Actors struct {
-	ID        string  `json:"id"`
+type Actor struct {
+	ID        string   `json:"id"`
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
 	Gender    string  `json:"gender"`
