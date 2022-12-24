@@ -6,12 +6,12 @@ type Movie struct {
 	ID     int64      `json:"id"`
 	Title  string     `json:"title"`
 	Year   *time.Time `json:"year"`
-	Actors []Actors   `json:"actors"`
+	Actors []Actor    `json:"actors"`
 	Genre  string     `json:"gen"`
 	Rating int64      `json:"rating"`
 }
 
-type Actors struct {
+type Actor struct {
 	ID        int64   `json:"id"`
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
