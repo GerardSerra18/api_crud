@@ -12,7 +12,7 @@ type Movie struct {
 }
 
 type Actor struct {
-	ID        int64   `json:"id"`
+	ID        string   `json:"id"`
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
 	Gender    string  `json:"gender"`
