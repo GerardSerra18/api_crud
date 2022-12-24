@@ -3,7 +3,7 @@ package main
 import "time"
 
 type Movie struct {
-	ID     int64      `json:"id"`
+	ID     string     `json:"id"`
 	Title  string     `json:"title"`
 	Year   *time.Time `json:"year"`
 	Actors []Actor    `json:"actors"`
