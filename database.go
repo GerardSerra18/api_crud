@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-//Database functions for save, update, read or delete Movies or Actors in our Database.
+//Database functions for save, update, read or delete Movies in our Database.
 
 func saveMovieToDB(movie Movie) (string, error) {
 	// Connect to the database
@@ -80,6 +80,8 @@ func deleteMovieFromDB(id string) error {
 
 	return nil
 }
+
+//Database functions for save, update, read or delete Actors in our Database.
 
 func saveActorToDB(actor Actor) (string, error) {
 	// Connect to the database
