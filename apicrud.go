@@ -59,14 +59,13 @@ func readMovie(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(movie)
 }
 
-
 func updateMovie(w http.ResponseWriter, r *http.Request) {
 	// Parse the request parameters to get the movie ID
 	params := mux.Vars(r)
 	id := params["id"]
 
 	// Parse the request body to get the updated movie data
-	var updatedMovie movie
+	var updatedMovie Movie
 	if err := json.NewDecoder(r.Body).Decode(&updatedMovie); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
@@ -83,11 +82,12 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update the movie in the database
-	if err := updateMovieInDB(id, updatedMovie); err != nil
-	// Return a response with the updated movie
-	updatedMovie.ID = id
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedMovie)
+	if err := updateMovieInDB(id, updatedMovie); err != nil {
+		// Return a response with the updated movie
+		updatedMovie.ID = id
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(updatedMovie)
+	}
 }
 
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +104,5 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 	// Return a response with an HTTP status code indicating success
 	w.WriteHeader(http.StatusNoContent)
 }
-
 
 //CRUD operations for actors
