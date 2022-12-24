@@ -22,7 +22,7 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if newMovie.Year.IsZero() {
-		http.Error(w, "Missing release date", http.StatusBadRequest)
+		http.Error(w, "Missing Year", http.StatusBadRequest)
 		return
 	}
 
