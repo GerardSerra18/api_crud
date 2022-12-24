@@ -1,9 +1,9 @@
-package basic
+package main 
 
 import "time"
 
 type Movie struct {
-	ID     int64      `json:"id"`
+	ID     string     `json:"id"`
 	Title  string     `json:"title"`
 	Year   *time.Time `json:"year"`
 	Actors []Actors   `json:"actors"`
@@ -12,7 +12,7 @@ type Movie struct {
 }
 
 type Actors struct {
-	ID        int64   `json:"id"`
+	ID        string  `json:"id"`
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
 	Gender    string  `json:"gender"`
