@@ -76,7 +76,7 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing title", http.StatusBadRequest)
 		return
 	}
-	if updatedMovie.ReleaseDate.IsZero() {
+	if updatedMovie.Year.IsZero() {
 		http.Error(w, "Missing release date", http.StatusBadRequest)
 		return
 	}
