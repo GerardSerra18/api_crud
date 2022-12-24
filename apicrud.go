@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"github.com/gorilla/mux"
-	"github.com/lib/pq" // PostgreSQL driver
 )
 
 //CRUD operations for movies
@@ -47,7 +46,7 @@ func readMovie(w http.ResponseWriter, r *http.Request) {
 	id := params["id"]
 
 	// Retrieve the movie from the database
-	movie, err := getMovieFromDB(id)
+	movie, err := readMovieFromDB(id)
 	if err != nil {
 		http.Error(w, "Error retrieving movie from database", http.StatusInternalServerError)
 		return
@@ -151,7 +150,7 @@ func readActor(w http.ResponseWriter, r *http.Request) {
 	id := params["id"]
 
 	// Retrieve the actor from the database
-	actor, err := getActorFromDB(id)
+	actor, err := readActorFromDB(id)
 	if err != nil {
 		http.Error(w, "Error retrieving actor from database", http.StatusInternalServerError)
 		return
