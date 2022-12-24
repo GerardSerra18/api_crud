@@ -139,4 +139,19 @@ func updateActorInDB(id string, actor Actor) error {
 	return nil
 }
 
+func deleteActorFromDB(id string) error {
+	// Connect to the database
+	db, err := sql.Open("mysql", "user:password@/database")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 
+	// Delete the actor from the database
+	_, err = db.Exec("DELETE FROM actors WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
