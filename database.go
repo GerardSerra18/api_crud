@@ -5,6 +5,8 @@ import (
 	"strconv"
 )
 
+//Database functions for save, update, read or delete Movies or Actors in our Database.
+
 func saveMovieToDB(movie Movie) (string, error) {
 	// Connect to the database
 	db, err := sql.Open("mysql", "user:password@/database")
@@ -14,7 +16,7 @@ func saveMovieToDB(movie Movie) (string, error) {
 	defer db.Close()
 
 	// Insert the movie data into the database
-	res, err := db.Exec("INSERT INTO movies (title, release_date, actors, genre, rating) VALUES (?, ?, ?, ?, ?)", movie.Title, movie.Year, movie.Actors, movie.Genre, movie.Rating)
+	res, err := db.Exec("INSERT INTO movies (title, year, actors, genre, rating) VALUES (?, ?, ?, ?, ?)", movie.Title, movie.Year, movie.Actors, movie.Genre, movie.Rating)
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +40,7 @@ func readMovieFromDB(id string) (Movie, error) {
 
 	// Retrieve the movie from the database
 	var m Movie
-	err = db.QueryRow("SELECT id, title, release_date, actors, genre, rating FROM movies WHERE id = ?", id).Scan(&m.ID, &m.Title, &m.Year, &m.Actors, &m.Genre, &m.Rating)
+	err = db.QueryRow("SELECT id, title, year, actors, genre, rating FROM movies WHERE id = ?", id).Scan(&m.ID, &m.Title, &m.Year, &m.Actors, &m.Genre, &m.Rating)
 	if err != nil {
 		return Movie{}, err
 	}
@@ -54,7 +56,7 @@ func updateMovieInDB(id string, movie Movie) error {
 	defer db.Close()
 
 	// Update the movie in the database
-	_, err = db.Exec("UPDATE movies SET title = ?, release_date = ?, actors = ?, genre = ?, rating = ? WHERE id = ?", movie.Title, movie.Year, movie.Actors, movie.Genre, movie.Rating, id)
+	_, err = db.Exec("UPDATE movies SET title = ?, year = ?, actors = ?, genre = ?, rating = ? WHERE id = ?", movie.Title, movie.Year, movie.Actors, movie.Genre, movie.Rating, id)
 	if err != nil {
 		return err
 	}
@@ -153,4 +155,3 @@ func deleteActorFromDB(id string) error {
 
 	return nil
 }
-
