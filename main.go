@@ -1,30 +1,38 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	err := initDB()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	//Here we are initializing the new router
+	// rest of your main function code here
 	r := mux.NewRouter()
 
-	//Register the CRUD Handlers
+	// define endpoint handlers for movie API
 	r.HandleFunc("/movies", createMovie).Methods("POST")
 	r.HandleFunc("/movies/{id}", readMovie).Methods("GET")
 	r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")
 	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
+	//r.HandleFunc("/movies", getAllMovies).Methods("GET")
+
+	// define endpoint handlers for actor API
 	r.HandleFunc("/actors", createActor).Methods("POST")
 	r.HandleFunc("/actors/{id}", readActor).Methods("GET")
 	r.HandleFunc("/actors/{id}", updateActor).Methods("PUT")
 	r.HandleFunc("/actors/{id}", deleteActor).Methods("DELETE")
+	//r.HandleFunc("/actors", getAllActors).Methods("GET")
+	//r.HandleFunc("/actors/{id}/rating", getActorRating).Methods("GET")
 
-	//Starting our server
-	fmt.Println("Server listening on port 8000...")
 	log.Fatal(http.ListenAndServe(":8000", r))
 
 }

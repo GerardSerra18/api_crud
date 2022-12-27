@@ -1,221 +1,310 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
+
+	_ "github.com/lib/pq"
 )
 
-//CRUD operations for movies
+//CRUD operations for movies7
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
-	// Parse the request body to get the movie data
-	var newMovie Movie
-	if err := json.NewDecoder(r.Body).Decode(&newMovie); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	// Validate the data
-	if newMovie.Title == "" {
-		http.Error(w, "Missing title", http.StatusBadRequest)
-		return
-	}
-	if newMovie.Year.IsZero() {
-		http.Error(w, "Missing Year", http.StatusBadRequest)
-		return
-	}
-
-	// Save the movie to the database
-	id, err := saveMovieToDB(newMovie)
+	var movie Movie
+	err := json.NewDecoder(r.Body).Decode(&movie)
 	if err != nil {
-		http.Error(w, "Error saving movie to database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Return a response with the newly created movie
-	newMovie.ID = id
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newMovie)
-}
+	// validate movie data
 
-func readMovie(w http.ResponseWriter, r *http.Request) {
-	// Parse the request parameters to get the movie ID
-	params := mux.Vars(r)
-	id := params["id"]
-
-	// Retrieve the movie from the database
-	movie, err := readMovieFromDB(id)
+	db, err := connectToDB()
 	if err != nil {
-		http.Error(w, "Error retrieving movie from database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer db.Close()
 
-	// Return a response with the movie data
+	err = db.QueryRow(`INSERT INTO movies7 (title, year, genre, rating) VALUES ($1, $2, $3, $4) RETURNING id`, movie.Title, movie.Year, movie.Genre, movie.Rating).Scan(&movie.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movie)
 }
 
+func readMovie(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var movie Movie
+	err = db.QueryRow(`SELECT id, title, year, genre, rating FROM movies7 WHERE id=$1`, id).Scan(&movie.ID, &movie.Title, &movie.Year, &movie.Genre, &movie.Rating)
+	if err == sql.ErrNoRows {
+		http.Error(w, "Movie not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movie)
+}
 func updateMovie(w http.ResponseWriter, r *http.Request) {
-	// Parse the request parameters to get the movie ID
-	params := mux.Vars(r)
-	id := params["id"]
-
-	// Parse the request body to get the updated movie data
-	var updatedMovie Movie
-	if err := json.NewDecoder(r.Body).Decode(&updatedMovie); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Validate the data
-	if updatedMovie.Title == "" {
-		http.Error(w, "Missing title", http.StatusBadRequest)
-		return
-	}
-	if updatedMovie.Year.IsZero() {
-		http.Error(w, "Missing release date", http.StatusBadRequest)
+	var movie Movie
+	err = json.NewDecoder(r.Body).Decode(&movie)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Update the movie in the database
-	if err := updateMovieInDB(id, updatedMovie); err != nil {
-		// Return a response with the updated movie
-		updatedMovie.ID = id
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(updatedMovie)
+	// validate movie data
+
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	defer db.Close()
+
+	_, err = db.Exec(`UPDATE movies7 SET title=$1, year=$2, genre=$3, rating=$4 WHERE id=$5`, movie.Title, movie.Year, movie.Genre, movie.Rating, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movie)
 }
 
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
-	// Parse the request parameters to get the movie ID
-	params := mux.Vars(r)
-	id := params["id"]
-
-	// Delete the movie from the database
-	if err := deleteMovieFromDB(id); err != nil {
-		http.Error(w, "Error deleting movie from database", http.StatusInternalServerError)
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Return a response with an HTTP status code indicating success
-	w.WriteHeader(http.StatusNoContent)
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`DELETE FROM movies7 WHERE id=$1`, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
-//CRUD operations for actors
+//CRUD operations for actors7
 
 func createActor(w http.ResponseWriter, r *http.Request) {
-	// Parse the request body to get the actor data
-	var newActor Actor
-	if err := json.NewDecoder(r.Body).Decode(&newActor); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	// Validate the data
-	if newActor.FirstName == "" {
-		http.Error(w, "Missing first name", http.StatusBadRequest)
-		return
-	}
-	if newActor.LastName == "" {
-		http.Error(w, "Missing last name", http.StatusBadRequest)
-		return
-	}
-	if newActor.Gender == "" {
-		http.Error(w, "Missing gender", http.StatusBadRequest)
-		return
-	}
-	if newActor.Age == 0 {
-		http.Error(w, "Missing age", http.StatusBadRequest)
-		return
-	}
-
-	// Save the actor to the database
-	id, err := saveActorToDB(newActor)
+	// parse request body
+	var a Actor
+	err := json.NewDecoder(r.Body).Decode(&a)
 	if err != nil {
-		http.Error(w, "Error saving Actor to database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Return a response with the newly created actor
-	newActor.ID = id
+
+	// validate input
+	if a.FirstName == "" || a.LastName == "" || a.Gender == "" || a.Age == 0 {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// execute INSERT query
+	res, err := db.Exec("INSERT INTO actors7 (first_name, last_name, gender, age) VALUES ($1, $2, $3, $4)", a.FirstName, a.LastName, a.Gender, a.Age)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// get ID of newly inserted actor
+	id, err := res.LastInsertId()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	a.ID = int(id)
+
+	// set HTTP headers
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newActor)
-}
 
-func readActor(w http.ResponseWriter, r *http.Request) {
-	// Parse the request parameters to get the actor ID
-	params := mux.Vars(r)
-	id := params["id"]
-
-	// Retrieve the actor from the database
-	actor, err := readActorFromDB(id)
+	// serialize actor to JSON
+	err = json.NewEncoder(w).Encode(a)
 	if err != nil {
-		http.Error(w, "Error retrieving actor from database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// Return a response with the actor data
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(actor)
 }
-
-func updateActor(w http.ResponseWriter, r *http.Request) {
-	// Parse the request parameters to get the actor ID
-	params := mux.Vars(r)
-	id := params["id"]
-
-	// Parse the request body to get the updated actor data
-	var updatedActor Actor
-	if err := json.NewDecoder(r.Body).Decode(&updatedActor); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+func readActor(w http.ResponseWriter, r *http.Request) {
+	// get actor ID from URL path
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid actor ID", http.StatusBadRequest)
 		return
 	}
 
-	// Validate the data
-	if updatedActor.FirstName == "" {
-		http.Error(w, "Missing first name", http.StatusBadRequest)
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if updatedActor.LastName == "" {
-		http.Error(w, "Missing last name", http.StatusBadRequest)
-		return
-	}
-	if updatedActor.Gender == "" {
-		http.Error(w, "Missing gender", http.StatusBadRequest)
-		return
-	}
-	if updatedActor.Age == 0 {
-		http.Error(w, "Missing age", http.StatusBadRequest)
+	defer db.Close()
+
+	// execute SELECT query
+	var a Actor
+	err = db.QueryRow("SELECT id, first_name, last_name, gender, age FROM actors7 WHERE id = $1", id).Scan(&a.ID, &a.FirstName, &a.LastName, &a.Gender, &a.Age)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Actor not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Update the actor in the database
-	if err := updateActorInDB(id, updatedActor); err != nil {
-		http.Error(w, "Error updating actor in database", http.StatusInternalServerError)
-		return
-	}
-
-	// Return a response with the updated actor
-	updatedActor.ID = id
+	// set HTTP headers
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedActor)
+	w.WriteHeader(http.StatusOK)
+
+	// write JSON response
+	err = json.NewEncoder(w).Encode(a)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+func updateActor(w http.ResponseWriter, r *http.Request) {
+	// get actor ID from URL path
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid actor ID", http.StatusBadRequest)
+		return
+	}
+
+	// parse request body
+	var a Actor
+	err = json.NewDecoder(r.Body).Decode(&a)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// validate input
+	if a.FirstName == "" || a.LastName == "" || a.Gender == "" || a.Age == 0 {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// execute UPDATE query
+	res, err := db.Exec("UPDATE actors7 SET first_name = $1, last_name = $2, gender = $3, age = $4 WHERE id = $5", a.FirstName, a.LastName, a.Gender, a.Age, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// check if actor was updated
+	n, err := res.RowsAffected()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if n == 0 {
+		http.Error(w, "Actor not found", http.StatusNotFound)
+		return
+	}
+
+	// set HTTP headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// write JSON response
+	err = json.NewEncoder(w).Encode(a)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func deleteActor(w http.ResponseWriter, r *http.Request) {
-	// Parse the request parameters to get the actor ID
-	params := mux.Vars(r)
-	id := params["id"]
-
-	// Delete the actor from the database
-	if err := deleteActorFromDB(id); err != nil {
-		http.Error(w, "Error deleting actor from database", http.StatusInternalServerError)
+	// get actor ID from URL path
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid actor ID", http.StatusBadRequest)
 		return
 	}
 
-	// Return a response with an HTTP status code indicating success
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// execute DELETE query
+	_, err = db.Exec("DELETE FROM actors7 WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// write response
 	w.WriteHeader(http.StatusNoContent)
 }
-
-

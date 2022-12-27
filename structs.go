@@ -1,21 +1,26 @@
 package main
 
-import "time"
-
 type Movie struct {
-	ID     string     `json:"id"`
-	Title  string     `json:"title"`
-	Year   *time.Time `json:"year"`
-	Actors []Actor    `json:"actors"`
-	Genre  string     `json:"gen"`
-	Rating int64      `json:"rating"`
+	ID     int64  `json:"id"`
+	Title  string `json:"title"`
+	Year   int    `json:"year"`
+	Genre  string `json:"genre"`
+	Actors []Actor
+	Rating float64 `json:"rating"`
 }
 
 type Actor struct {
-	ID        string   `json:"id"`
-	FirstName string  `json:"first_name"`
-	LastName  string  `json:"last_name"`
-	Gender    string  `json:"gender"`
-	Age       int64   `json:"age"`
-	Movies    []Movie `json:"movies"`
+	ID          int    `json:"id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Gender      string `json:"gender"`
+	Age         int64  `json:"age"`
+	Movies      []Movie
+	AudienceRtg float64 `json:"audience_rating"`
+}
+
+type MoviesActorsRelation struct {
+	ActorID     int     `json:"actor_id"`
+	MovieID     int     `json:"movie_id"`
+	AudienceRtg float64 `json:"audience_rating"`
 }
