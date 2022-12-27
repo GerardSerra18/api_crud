@@ -308,3 +308,160 @@ func deleteActor(w http.ResponseWriter, r *http.Request) {
 	// write response
 	w.WriteHeader(http.StatusNoContent)
 }
+
+//GetAllMovies and GetAllActors and with rating ang pagination, BONUS PART
+
+func getAllMovies(w http.ResponseWriter, r *http.Request) {
+	// parse pagination query parameters
+	pageSizeStr := r.URL.Query().Get("page_size")
+	pageNumberStr := r.URL.Query().Get("page_number")
+	pageSize, err := strconv.ParseInt(pageSizeStr, 10, 64)
+	if err != nil {
+		pageSize = 10 // default page size
+	}
+	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 64)
+	if err != nil {
+		pageNumber = 1 // default page number
+	}
+
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// execute SELECT query
+	offset := (pageNumber - 1) * pageSize
+	rows, err := db.Query("SELECT id, title, year, genre, rating FROM movies ORDER BY year DESC LIMIT $1 OFFSET $2", pageSize, offset)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// iterate over rows
+	var movies []Movie
+	for rows.Next() {
+		var m Movie
+		err := rows.Scan(&m.ID, &m.Title, &m.Year, &m.Genre, &m.Rating)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		movies = append(movies, m)
+	}
+
+	// set HTTP headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// write JSON response
+	err = json.NewEncoder(w).Encode(movies)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func getAllActors(w http.ResponseWriter, r *http.Request) {
+	// parse pagination query parameters
+	pageSizeStr := r.URL.Query().Get("page_size")
+	pageNumberStr := r.URL.Query().Get("page_number")
+	pageSize, err := strconv.ParseInt(pageSizeStr, 10, 64)
+	if err != nil {
+		pageSize = 10 // default page size
+	}
+	pageNumber, err := strconv.ParseInt(pageNumberStr, 10, 64)
+	if err != nil {
+		pageNumber = 1 // default page number
+	}
+
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// execute SELECT query
+	offset := (pageNumber - 1) * pageSize
+	rows, err := db.Query("SELECT id, first_name, last_name, gender, age FROM actors ORDER BY first_name ASC LIMIT $1 OFFSET $2", pageSize, offset)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// iterate over rows
+	var actors []Actor
+	for rows.Next() {
+		var a Actor
+		err := rows.Scan(&a.ID, &a.FirstName, &a.LastName, &a.Gender, &a.Age)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		actors = append(actors, a)
+	}
+
+	// set HTTP headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// write JSON response
+	err = json.NewEncoder(w).Encode(actors)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func getActorRating(w http.ResponseWriter, r *http.Request) {
+	// parse actor ID from URL path
+	vars := mux.Vars(r)
+	actorIDStr := vars["id"]
+	actorID, err := strconv.ParseInt(actorIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid actor ID", http.StatusBadRequest)
+		return
+	}
+
+	// connect to database
+	db, err := connectToDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// execute SELECT query
+	var rating float64
+	err = db.QueryRow("SELECT AVG(audience_rating) FROM movies_actors_relation WHERE actor_id = $1", actorID).Scan(&rating)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Actor not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// set HTTP headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// write JSON response
+	err = json.NewEncoder(w).Encode(struct {
+		Rating float64 `json:"rating"`
+	}{
+		Rating: rating,
+	})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
