@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-//CRUD operations for movies7
+//CRUD operations for movies
 
 func createMovie(w http.ResponseWriter, r *http.Request) {
 	var movie Movie
@@ -459,3 +459,4 @@ func getActorRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
