@@ -30,7 +30,7 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	err = db.QueryRow(`INSERT INTO movies7 (title, year, genre, rating) VALUES ($1, $2, $3, $4) RETURNING id`, movie.Title, movie.Year, movie.Genre, movie.Rating).Scan(&movie.ID)
+	err = db.QueryRow(`INSERT INTO movies (title, year, genre, rating) VALUES ($1, $2, $3, $4) RETURNING id`, movie.Title, movie.Year, movie.Genre, movie.Rating).Scan(&movie.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -56,7 +56,7 @@ func readMovie(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	var movie Movie
-	err = db.QueryRow(`SELECT id, title, year, genre, rating FROM movies7 WHERE id=$1`, id).Scan(&movie.ID, &movie.Title, &movie.Year, &movie.Genre, &movie.Rating)
+	err = db.QueryRow(`SELECT id, title, year, genre, rating FROM movies WHERE id=$1`, id).Scan(&movie.ID, &movie.Title, &movie.Year, &movie.Genre, &movie.Rating)
 	if err == sql.ErrNoRows {
 		http.Error(w, "Movie not found", http.StatusNotFound)
 		return
@@ -93,7 +93,7 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(`UPDATE movies7 SET title=$1, year=$2, genre=$3, rating=$4 WHERE id=$5`, movie.Title, movie.Year, movie.Genre, movie.Rating, id)
+	_, err = db.Exec(`UPDATE movies SET title=$1, year=$2, genre=$3, rating=$4 WHERE id=$5`, movie.Title, movie.Year, movie.Genre, movie.Rating, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -119,15 +119,14 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(`DELETE FROM movies7 WHERE id=$1`, id)
+	_, err = db.Exec(`DELETE FROM movies WHERE id=$1`, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-//CRUD operations for actors7
-
+// CRUD operations for actors7
 func createActor(w http.ResponseWriter, r *http.Request) {
 	// parse request body
 	var a Actor
@@ -152,19 +151,13 @@ func createActor(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// execute INSERT query
-	res, err := db.Exec("INSERT INTO actors7 (first_name, last_name, gender, age) VALUES ($1, $2, $3, $4)", a.FirstName, a.LastName, a.Gender, a.Age)
+	var actorID int
+	err = db.QueryRow("INSERT INTO actors (first_name, last_name, gender, age) VALUES ($1, $2, $3, $4) RETURNING id", a.FirstName, a.LastName, a.Gender, a.Age).Scan(&actorID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// get ID of newly inserted actor
-	id, err := res.LastInsertId()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	a.ID = int(id)
+	a.ID = actorID
 
 	// set HTTP headers
 	w.Header().Set("Content-Type", "application/json")
@@ -177,6 +170,7 @@ func createActor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func readActor(w http.ResponseWriter, r *http.Request) {
 	// get actor ID from URL path
 	vars := mux.Vars(r)
@@ -197,7 +191,7 @@ func readActor(w http.ResponseWriter, r *http.Request) {
 
 	// execute SELECT query
 	var a Actor
-	err = db.QueryRow("SELECT id, first_name, last_name, gender, age FROM actors7 WHERE id = $1", id).Scan(&a.ID, &a.FirstName, &a.LastName, &a.Gender, &a.Age)
+	err = db.QueryRow("SELECT id, first_name, last_name, gender, age FROM actors WHERE id = $1", id).Scan(&a.ID, &a.FirstName, &a.LastName, &a.Gender, &a.Age)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Actor not found", http.StatusNotFound)
@@ -251,7 +245,7 @@ func updateActor(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// execute UPDATE query
-	res, err := db.Exec("UPDATE actors7 SET first_name = $1, last_name = $2, gender = $3, age = $4 WHERE id = $5", a.FirstName, a.LastName, a.Gender, a.Age, id)
+	res, err := db.Exec("UPDATE actors SET first_name = $1, last_name = $2, gender = $3, age = $4 WHERE id = $5", a.FirstName, a.LastName, a.Gender, a.Age, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -299,7 +293,7 @@ func deleteActor(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// execute DELETE query
-	_, err = db.Exec("DELETE FROM actors7 WHERE id = $1", id)
+	_, err = db.Exec("DELETE FROM actors WHERE id = $1", id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

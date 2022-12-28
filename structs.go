@@ -14,7 +14,7 @@ type Actor struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
 	Gender      string `json:"gender"`
-	Age         int64  `json:"age"`
+	Age         int    `json:"age"`
 	Movies      []Movie
 	AudienceRtg float64 `json:"audience_rating"`
 }
