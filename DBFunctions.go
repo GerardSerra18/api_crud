@@ -1,7 +1,27 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	//"fmt"
+	//"log"
 
+	//"github.com/spf13/viper"
+)
+
+/*func init() {
+
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/Users/gerard/VisualStudioCode/api_crud")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Error reading config file, %s", err)
+	}
+
+}*/
+
+
+// Create tables
 func initDB() error {
 	db, err := connectToDB()
 	if err != nil {
@@ -29,8 +49,16 @@ func initDB() error {
 
 // Database connection
 func connectToDB() (*sql.DB, error) {
-	//psqlconn := fmt.Sprintf("host = %s port = %d user = %s password = %s dbname = %s sslmode = disable", host, port, password, dbname)
+
 	connStr := "user=gerard password=12345 dbname=postgres sslmode=disable"
+
+	// read configuration values from viper
+	//user := viper.GetString("database.user")
+	//password := viper.GetString("database.password")
+	//dbname := viper.GetString("database.name")
+	//connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
+
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err

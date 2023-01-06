@@ -15,17 +15,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// rest of your main function code here
+	// router initalization
 	r := mux.NewRouter()
 
-	// define endpoint handlers for movie API
+	// endpoints handlers for movie API
+
 	r.HandleFunc("/movies", createMovie).Methods("POST")
 	r.HandleFunc("/movies/{id}", readMovie).Methods("GET")
 	r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")
 	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
 	r.HandleFunc("/movies", getAllMovies).Methods("GET")
 
-	// define endpoint handlers for actor API
+	// endpoints handlers for actor API
 	r.HandleFunc("/actors", createActor).Methods("POST")
 	r.HandleFunc("/actors/{id}", readActor).Methods("GET")
 	r.HandleFunc("/actors/{id}", updateActor).Methods("PUT")
