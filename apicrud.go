@@ -126,7 +126,7 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CRUD operations for actors7
+// CRUD operations for actors
 func createActor(w http.ResponseWriter, r *http.Request) {
 	// parse request body
 	var a Actor
